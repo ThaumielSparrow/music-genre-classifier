@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
 
 
 # Mel spectrogram frame count
@@ -61,3 +59,4 @@ class GenreCNN(nn.Module):
         x = F.relu(self.fc3(x))
 
         return x
+    
