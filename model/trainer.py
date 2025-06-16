@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 class GenreClassifier:
     """
@@ -81,5 +81,52 @@ class GenreClassifier:
         patience_counter = 0
 
         for epoch in range(epochs):
-            # TODO: implement training loop
-            pass
+            train_loss, train_acc = self.train_epoch(train_loader, optimizer, criterion)
+            val_loss, val_acc, _, _ = self.validate(val_loader, criterion)
+
+            self.train_losses.append(train_loss)
+            self.train_accuracies.append(train_acc)
+            self.val_losses.append(val_loss)
+            self.val_accuracies.append(val_acc)
+
+            scheduler.step(val_loss)
+
+            print(f'Epoch {epoch+1}/{epochs}')
+            print(f'Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.4f}')
+            print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.4f}')
+            print(f'LR: {optimizer.param_groups[0]['lr']:.6f}')
+            print('-'*50)
+
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience_counter = 0
+
+                torch.save(self.model.state_dict(), 'best_genre_model.pth')
+            
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    print(f'Patience exceeded at epoch {epoch+1}, stopping training')
+                    break
+
+    def evaluate(self, test_loader:DataLoader, genre_names:Optional[List[str]]=None) -> Tuple[float, List[int], List[int]]:
+        criterion = nn.CrossEntropyLoss()
+        test_loss, test_acc, preds, labels = self.validate(test_loader, criterion)
+
+        print(f'Test Loss: {test_loss:.4f}')
+        print(f'Test Accuracy: {test_acc:.4f}')
+
+        if genre_names:
+            print(f'\nClassification Report:\n{classification_report(labels, preds, target_names=genre_names)}')
+             
+            cm = confusion_matrix(labels, preds)
+            plt.figure(figsize=(10, 8))
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=genre_names, yticklabels=genre_names)
+            plt.title('Confusion Matrix')
+            plt.ylabel('True Label')
+            plt.xlabel('Predicted Label')
+            plt.show()
+
+        return test_acc, preds, labels
+
+

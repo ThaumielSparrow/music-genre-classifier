@@ -35,7 +35,7 @@ class GenreCNN(nn.Module):
         self.dropout = nn.Dropout(dropout_rate)
 
         # Fully connected layers
-        fc1_infeatures = in_features=256 * (n_mels//16) * (N_FRAMES//16)
+        fc1_infeatures = 256 * (n_mels//16) * (N_FRAMES//16)
         self.fc1 = nn.Linear(in_features=fc1_infeatures, out_features=512)
         self.fc2 = nn.Linear(in_features=512, out_features=256)
         self.fc3 = nn.Linear(in_features=256, out_features=n_genres)
